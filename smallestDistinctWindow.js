@@ -8,15 +8,7 @@ http://practice.geeksforgeeks.org/problems/smallest-distant-window/0
 */
 
 //TODO, look into if i even needed to make copies beyond the first inner loop 
-function copy(obj){
-	var copyObj = {}, prop;
-	for ( prop in obj ) {
-  		if ( obj.hasOwnProperty( prop ) ) {
-   			copyObj[ prop ] = obj[ prop ];
-  		}
-	}
-	return copyObj;
-}
+
 function smallestDistinctWindow(str){
 		var lettersSeen = [];
 		var uniqLetters = [];
@@ -67,6 +59,15 @@ function smallestDistinctWindow(str){
 		}
 	}
 
+	function copy(obj){
+		var copyObj = {}, prop;
+		for ( prop in obj ) {
+  			if ( obj.hasOwnProperty( prop ) ) {
+   				copyObj[ prop ] = obj[ prop ];
+  			}
+		}
+		return copyObj;
+ 	}
 	function lettersMissing(uniqLetters, str ){// ,begInd, endInd){
 		var lettersNotSeen = [];
 		var freq = {};

@@ -29,17 +29,146 @@ function AVLTree(v, p, l, r, count, h){
  */
 function search(root, key){
 	if(!root) return null;
-	if(key < root.key){
+	if(key < root.value){
 		return search(root.l, key);
 	}
-	else if(key > root.key){
+	else if(key > root.value){
 		return search(root.r, key);
 	}
 	else{
 		return root;
 	}
+};
+
+//Delete is keyword for removing a property from an object
+function remove(root, key){
+	if(!root)
+		return null;
+	var lastRootNode;
+	if(key < root.value){
+		 lastRootNode = remove(root.l, key);
+	}
+	else if(key > root.value){
+		lastRootNode = remove(root.r, key);
+	}
+	else {
+		var lSubT = root.l, rSubT = root.r;
+		if (!lSubT && !rSubT) {
+			lastRootNode = root.p; // root's parent becomes new leaf
+			if (root.p) { // set root's parent ptr to null, so not pointing to root anymore
+				if (isLeftChild(root))
+					root.p.l = null;
+				else
+					root.p.r = null
+			}
+		}
+		else if (!rSubT || (lSubT.height >= rSubT.height)) {// then use LSub as new root, attacth LSubT's R to root's successor
+			//set pred first.
+			var rSubTRoot = concatSubtreeToNodesSuccessor(root, lSubT);
+			//then worry about setting root.p's ptr correctly
+			lSubT.r = rSubTRoot;
+			rSubTRoot.p = lSubT;
+			lSubT.p = root.p;
+
+			root.r = null, root.l = null; // null out deleted ptr
+			if (root.p) {
+				root.p.l = lSubT; // if exists, make grandparent node pt to new child
+				root.p = null; // null out deleted nodes P ptr
+			}
+			lastRootNode = lSubT;
+		}
+		else {
+			var lSubTRoot = concatSubtreeToNodesPredecessor(root, rSubT);
+			rSubT.l = lSubTRoot;
+			lSubTRoot.p = rSubT;
+			rSubT.p = root.p;
+
+			root.r = null, root.l = null; // null out deleted ptr
+			if (root.p) {
+				root.p.r = rSubT; // if exists, make grandparent node pt to new child
+				root.p = null; // null out deleted nodes P ptr
+			}
+			lastRootNode = rSubT;
+		}
+	}
+		//recount height from leaf back to root and rotate as needed
+	root.height = maxHeight(root.l, root.r)+1;
+	var bf = balanceFactor(root);
+	if(bf >= 2){
+		if(isLeftChild(lastRootNode) && lPathIsGreater(lastRootNode) ){
+			return rotateRight(lastRootNode);
+		}
+		var pivot = lastRootNode.r;
+		rotateLeft(pivot);
+		return rotateRight(pivot);
+	}
+	if(bf <= -2){
+		if(!isLeftChild(lastRootNode) && !lPathIsGreater(lastRootNode)){
+			return rotateLeft(lastRootNode);
+		}
+		var pivot = lastRootNode.l;
+		rotateRight(pivot);
+		return rotateLeft(pivot);
+	}
+
+	return root;
 }
+
+// Get smallest node that is bigger than root
+function concatSubtreeToNodesSuccessor(root, rightSubtreeToAdd){
+	if(!root.r){
+		return rightSubtreeToAdd;
+	}
+	var r =  helper(root.r);
+	root.height = maxHeight(root.l, root.r) + 1;
+	return r;
+	function helper(root) {
+		if (!rightSubtreeToAdd) return null;
+		if (!root) throw Error("Successor Func:root shouldn't be null in Pred/Succ");
+
+		var nodeToConcat;
+		if (!root.l) {
+			root.r = rightSubtreeToAdd;
+		}
+		else if (root.l) {
+			nodeToConcat = helper(root.l);
+			root.l = nodeToConcat;
+		}
+		root.height = maxHeight(root.l, root.r) + 1;
+		return root;
+	}
+}
+//Get biggest node that is smaller than root
+function concatSubtreeToNodesPredecessor(root, leftSubtreeToAdd){
+	if(!root.l){
+		return leftSubtreeToAdd;
+	}
+	var r =  helper(root.l);
+	root.height = maxHeight(root.l, root.r) + 1;
+	return r;
+	function helper(root) {
+		if (!leftSubtreeToAdd) return null;
+		if (!root) throw Error("Predecessor Func:root shouldn't be null in Pred/Succ");
+
+		var nodeToConcat;
+		if (!root.r) {
+			console.log('pred is %s', root.value);
+			root.l = leftSubtreeToAdd;
+		}
+		else if (root.r) {
+			nodeToConcat = helper(root.r);
+			root.r = nodeToConcat;
+		}
+		root.height = maxHeight(root.l, root.r) + 1;
+		return root;
+	}
+}
+
 //TODO allow for insert of object. Treat V as key and then put some value to insert
+//I didn't think you had to recurisvley check path for more imbalanced after finishing first. I implemented it that way
+//because i thought MIT prof said so. Only neccessary for deletes but doesn't hurt to have code there.
+//In fact code would more inellegent if it didn't do it that way do to nature of recursion. Only extra work is
+// getting new height and BF which is like an add and sub
 function insert(root, v){
 	if(!root){
 		throw Error("root shouldn't be null, you jabronie ");
@@ -51,7 +180,6 @@ function insert(root, v){
 		else {
 			root.l = new AVLTree(v, root);
 			lastRootNode = root.l;
-			//return root.l;
 		}
 	}
 	else if(v > root.value){
@@ -60,7 +188,6 @@ function insert(root, v){
 		else{
 			root.r = new AVLTree(v, root);
 			lastRootNode = root.r;
-		//	return root.r;
 		}
 	}
 	else{
@@ -169,9 +296,38 @@ function maxHeight(lTree, rTree){
 
 //TODO figure out abstraction to allow inserting w/o having to update root node.
 //Probably make AVLTree a wrapper class, and change current AVLTree to AVLNode
-var r = new AVLTree(10);
+var r = new AVLTree(11);
+/*
 r = insert(r, 6);
 r = insert(r, 8);
 r = insert(r,12);
+*/
+r = insert(r,4);
+r = insert(r,2);
+r = insert(r,1);
+r = insert(r,3);
+var n;
+r = insert(r,8);
+n = r;
+r = insert(r,7);
+r = insert(r,9);
+r = insert(r,5);
+r = insert(r,6);
 
 console.log("hi");
+//console.log(r);
+
+var l = new AVLTree(0);
+
+var p = new AVLTree(8);
+p = insert(p,7);
+p = insert(p,9);
+p = insert(p, 5);
+
+//concatSubtreeToNodesPredecessor(r.r, l);
+//concatSubtreeToNodesPredecessor(p, l);
+
+console.log(p);
+console.log('oink');
+p = remove(p, 7);
+console.log(p);

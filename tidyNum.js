@@ -22,8 +22,8 @@ function biggestTidy(n){
 
 }
 console.log(biggestTidy(2359));
-console.log(biggestTidy(399843972));
-console.log(biggestTidy(111111111111111110));
+//console.log(biggestTidy(399843972));
+//console.log(biggestTidy(111111111111111110));
 /*
 399843972
 398999999
